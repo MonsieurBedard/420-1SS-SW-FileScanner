@@ -22,7 +22,16 @@
             <TextBlock Text="{Binding SelectedFolder}"/>
         </StatusBar>
         <Grid>
-            <ListView ItemsSource="{Binding FolderItems}"/>
+            <ListView ItemsSource="{Binding FolderItems}">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="/Images/folder.png" Height="20" Width="20" Margin="0 0 8 0"/>
+                            <TextBlock Text="{Binding}"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
         </Grid>
     </DockPanel>
 </Window>
