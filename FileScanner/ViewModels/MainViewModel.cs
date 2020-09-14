@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
+using System.Windows.Markup;
 
 namespace FileScanner.ViewModels
 {
@@ -41,7 +42,7 @@ namespace FileScanner.ViewModels
         public MainViewModel()
         {
             OpenFolderCommand = new DelegateCommand<string>(OpenFolder);
-            ScanFolderCommand = new DelegateCommand<string>(ScanFolder, CanExecuteScanFolder);
+            ScanFolderCommand = new DelegateCommand<string>(ScanFolderAsync, CanExecuteScanFolder);
         }
 
         private bool CanExecuteScanFolder(string obj)
@@ -63,7 +64,17 @@ namespace FileScanner.ViewModels
         private void ScanFolder(string dir)
         {
             FolderItems = new ObservableCollection<string>(GetDirs(dir));
-            
+
+            foreach (var item in Directory.EnumerateFiles(dir, "*"))
+            {
+                FolderItems.Add(item);
+            }
+        }
+
+        private async void ScanFolderAsync(string dir)
+        {
+            FolderItems = await Task.Run(() => new ObservableCollection<string>(GetDirs(dir)));
+
             foreach (var item in Directory.EnumerateFiles(dir, "*"))
             {
                 FolderItems.Add(item);
@@ -71,17 +82,41 @@ namespace FileScanner.ViewModels
         }
 
         IEnumerable<string> GetDirs(string dir)
-        {            
-            foreach (var d in Directory.EnumerateDirectories(dir, "*"))
+        {
+            IEnumerable<string> directories = null;
+            IEnumerable<string> files = null;
+            
+            try
+            {
+                directories = Directory.EnumerateDirectories(dir, "*");
+            }
+            catch (UnauthorizedAccessException e)
+            {
+                Console.WriteLine(e);
+            }
+
+            foreach (var d in directories)
             {
                 yield return d;
+
+                try
+                {
+                    files = Directory.EnumerateFiles(d, "*");
+                }
+                catch (UnauthorizedAccessException e)
+                {
+                    Console.WriteLine(e);
+                }
+
+                foreach (var f in files)
+                {
+                    yield return f;
+                }
             }
         }
 
         ///TODO : Tester avec un dossier avec beaucoup de fichier
         ///TODO : Rendre l'application asynchrone
         ///TODO : Ajouter un try/catch pour les dossiers sans permission
-
-
     }
 }
